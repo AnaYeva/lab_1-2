@@ -4,30 +4,61 @@
 using namespace sf;
 using namespace std;
 
-int main() {
-    char letters[]=text;
-
+class AnimatedText{
+private:
     int count=0;//count of letters currently displayed
     string temp;//temporary string to display par of the massage
-    temp+=letters[0];
-    bool finished =false;//are all letters displayed?
-
-    Time time = sf::seconds(duration/(float)(sizeof(letters)-1));
-    Clock clock;
-
-    RenderWindow window(sf::VideoMode(1500, 170), "SFML Application");
+    bool finished=false;//are all letters displayed?
+    string letters;//full message
 
     Font font;
-    font.loadFromFile("arial.ttf");
-
+    Clock clock;
+    Time time;
     Text message;
-    message.setFont(font);
-    message.setString(temp);
-    message.setCharacterSize(60);
-    message.setPosition(10,35);
-    message.setFillColor(sf::Color::White);
 
+    float oneLetterTIme(){
+        return duration/(float)(letters.length());//time for one letter to appear
+    }
+    void refreshMessage(){
+        message.setString(temp);
+    }
+    bool timeCheck() {
+        return (time <= clock.getElapsedTime());
+    }
 
+public:
+    AnimatedText(const string &let){
+        font.loadFromFile("arial.ttf");
+
+        message.setFont(font);
+        message.setString(temp);
+        message.setCharacterSize(60);
+        message.setPosition(10,35);
+        message.setFillColor(sf::Color::White);
+        letters=let;
+        time = sf::seconds(oneLetterTIme());
+    }
+    Text getMessage(){
+        return message;
+    }
+    void Animator(){
+        if (!finished) {
+            if (timeCheck()) {
+                if (count < letters.length()) {
+                    temp += letters[count];
+                    clock.restart();
+                } else finished = true;
+                count += 1;
+            }
+        }
+        refreshMessage();
+    }
+};
+
+int main() {
+
+    AnimatedText object(text);
+    RenderWindow window(sf::VideoMode(1500, 170), "SFML Application");
 
     while (window.isOpen()) {
         Event event{};
@@ -35,18 +66,11 @@ int main() {
             if (event.type == Event::Closed)
                 window.close();
         }
-        if (!finished) {
-            if (time <= clock.getElapsedTime()) {
-                count += 1;
-                if (count < sizeof(letters)-1) {
-                    temp += letters[count];
-                    clock.restart();
-                } else finished = true;
-            }
-        }
-        message.setString(temp);
+
+        object.Animator();
+
         window.clear(Color(237,157,88,0));
-        window.draw(message);
+        window.draw(object.getMessage());
         window.display();
     }
     return 0;
